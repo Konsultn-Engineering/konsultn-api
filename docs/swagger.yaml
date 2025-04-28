@@ -1,0 +1,110 @@
+definitions:
+  model.Project:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      tasks:
+        items:
+          $ref: '#/definitions/task.Task'
+        type: array
+    type: object
+  task.Task:
+    properties:
+      assignee:
+        $ref: '#/definitions/user.User'
+      assignee_id:
+        type: string
+      created_at:
+        type: string
+      description:
+        type: string
+      due_date:
+        type: string
+      id:
+        type: string
+      parent_task_id:
+        type: string
+      priority:
+        type: string
+      project_id:
+        type: string
+      status:
+        type: string
+      title:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  user.User:
+    properties:
+      accessToken:
+        type: string
+      createdAt:
+        type: string
+      email:
+        type: string
+      firstName:
+        type: string
+      id:
+        type: string
+      lastLogin:
+        type: string
+      lastName:
+        type: string
+      password:
+        description: raw password from user
+        type: string
+      phoneNumber:
+        type: string
+      profilePictureURL:
+        type: string
+      refreshToken:
+        type: string
+      resetToken:
+        type: string
+      resetTokenExpiry:
+        type: string
+      socialEmail:
+        type: string
+      socialID:
+        type: string
+      socialProfilePicture:
+        type: string
+      socialProvider:
+        type: string
+      status:
+        type: string
+      twoFactorEnabled:
+        type: boolean
+      twoFactorSecret:
+        type: string
+      uid:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /projects/{id}:
+    get:
+      description: Creates a project with basic information
+      parameters:
+      - description: Project ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Project'
+      summary: Create a new project
+      tags:
+      - projects
+swagger: "2.0"
