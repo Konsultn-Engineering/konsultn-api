@@ -13,6 +13,8 @@ func mapTeamMembers(members []model.TeamMember) []TeamMemberDTO {
 			FirstName: m.User.FirstName,
 			LastName:  m.User.LastName,
 			Email:     m.User.Email,
+			JoinedAt:  m.JoinedAt.String(),
+			Role:      m.Role,
 		})
 	}
 	return result

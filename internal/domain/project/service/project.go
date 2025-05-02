@@ -27,11 +27,11 @@ func (s *ProjectService) CreateProjectTask(projectID string, t dto.TaskDTO) (*dt
 		return nil, err
 	}
 
-	err = s.taskClient.CreateTaskForProject(&project, t)
+	err = s.taskClient.CreateTaskForProject(project, t)
 	if err != nil {
 		return nil, err
 	}
-	s.Repo.Preload(&project, []string{"Tasks", "Tasks.Assignee"}, "id", projectID)
+	s.Repo.Preload(project, []string{"Tasks", "Tasks.Assignee"}, "id", projectID)
 	projectDTO, err := mapper.Convert[dto.ProjectDTO](project)
 
 	return &projectDTO, nil

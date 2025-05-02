@@ -1,59 +1,101 @@
 package service
 
 import (
+	"fmt"
 	"gorm.io/gorm"
+	"konsultn-api/internal/domain/team/client"
 	"konsultn-api/internal/domain/team/dto"
 	"konsultn-api/internal/domain/team/model"
+	"konsultn-api/internal/domain/team/repository"
 	"konsultn-api/internal/shared/crud"
+	"konsultn-api/internal/shared/helper"
 )
 
 type TeamService struct {
-	teamRepo       *crud.Repository[model.Team]
-	teamMemberRepo *crud.Repository[model.TeamMember]
-	db             *gorm.DB
+	teamRepo           *repository.TeamRepository
+	teamMemberRepo     *repository.TeamMemberRepository
+	teamInvitationRepo *repository.TeamInvitationRepository
+	userClient         *client.UserClientImpl
+	db                 *gorm.DB
 }
 
 func NewTeamService(db *gorm.DB) *TeamService {
+	teamRepo := repository.NewTeamRepository(db)
+	teamMemberRepo := repository.NewTeamMemberRepository(db)
+	teamInvitationRepo := repository.NewTeamInvitationRepository(db)
+	userRepo := crud.NewRepository[model.UserView](db) // You must import the user domain
+
+	// Inject UserClientImpl with its dependencies
+	userClient := &client.UserClientImpl{
+		UserRepo: userRepo,
+	}
+
+	// Construct the TeamService
 	return &TeamService{
-		teamRepo:       crud.NewRepository[model.Team](db),
-		teamMemberRepo: crud.NewRepository[model.TeamMember](db),
-		db:             db,
+		teamRepo:           teamRepo,
+		teamMemberRepo:     teamMemberRepo,
+		teamInvitationRepo: teamInvitationRepo,
+		userClient:         userClient,
+		db:                 db,
 	}
 }
 
-func (s *TeamService) CreateTeam(userId string, createTeamRequest dto.CreateTeamRequest) (dto.TeamDTO, error) {
-	var createdTeam model.Team
-
-	err := s.db.Transaction(func(tx *gorm.DB) error {
-		createdTeam = model.Team{
-			Name:    createTeamRequest.Name,
-			Slug:    createTeamRequest.Slug,
-			OwnerID: userId,
+func (s *TeamService) syncTeamMembers(teamId string, add []dto.AddMemberRequest, remove []string) error {
+	for _, user := range add {
+		// Skip if user doesn't exist in identity service
+		if s.userClient.GetUserById(user.UserId).ID == "" {
+			continue
 		}
 
-		if err := tx.Create(&createdTeam).Error; err != nil {
-			return err
+		member := model.TeamMember{
+			TeamID: teamId,
+			UserID: user.UserId,
+			Role:   user.Role.String(),
 		}
 
-		// Auto-assign creator as team owner
-		member := &model.TeamMember{
-			TeamID: createdTeam.ID,
-			UserID: userId,
-			Role:   "owner",
+		// Try inserting, and if already exists, update only if the role has changed
+		_, err := s.teamMemberRepo.UpsertOnlyColumns(&member, []string{"team_id", "user_id"}, []string{"role"})
+
+		if err != nil {
+			return fmt.Errorf("syncTeamMembers failed on user %s: %w", user.UserId, err)
 		}
-
-		if err := tx.Create(member).Error; err != nil {
-			return err
-		}
-
-		return nil
-
-	})
-	if err != nil {
-		return dto.TeamDTO{}, err
 	}
 
-	s.teamRepo.Preload(&createdTeam, []string{"Owner", "Members.User"}, "id", createdTeam.ID)
+	if len(remove) > 0 {
+		if err := s.teamMemberRepo.DeleteWhere("team_id = ? AND user_id IN ?", teamId, remove); err != nil {
+			return err
+		}
+	}
 
-	return dto.ToTeamDTO(&createdTeam), err
+	return nil
+}
+
+func (s *TeamService) hydrateTeam(team *model.Team) error {
+	// Preload team with members
+	if err := s.teamRepo.Preload(team, []string{"Members"}, "id", team.ID); err != nil {
+		return err
+	}
+
+	// Extract user IDs from team members
+	memberIds := helper.Map(team.Members, func(m model.TeamMember) string {
+		return m.UserID
+	})
+
+	// Fetch user data
+	members := s.userClient.GetUsersByIds(memberIds)
+
+	// Build a map of userID → UserView
+	userMap := make(map[string]model.UserView, len(members))
+	for _, u := range members {
+		userMap[u.ID] = u
+	}
+
+	// Attach UserView to each member
+	for i := range team.Members {
+		if u, ok := userMap[team.Members[i].UserID]; ok {
+			team.Members[i].User = u
+		}
+	}
+
+	return nil
 }

@@ -41,7 +41,7 @@ func (h *Handler) GetTaskById(ctx *gin.Context) {
 	taskId := ctx.Param("id")
 
 	task, err := h.repo.FindById(taskId)
-	h.repo.Preload(&task, []string{"Assignee"}, "id", task.ID)
+	h.repo.Preload(task, []string{"Assignee"}, "id", task.ID)
 
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

@@ -27,7 +27,7 @@ func main() {
 
 	connection, _ := db.InitDB()
 	//connection = connection.Debug()
-	errr := connection.AutoMigrate(&user.User{}, &model.Project{}, &task.Task{}, model2.Team{}, model2.TeamMember{})
+	errr := connection.AutoMigrate(&user.User{}, &model.Project{}, &task.Task{}, model2.Team{}, model2.TeamMember{}, model2.TeamInvitation{})
 	if errr != nil {
 		return
 	}

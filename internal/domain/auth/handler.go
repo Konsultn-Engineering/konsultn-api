@@ -47,7 +47,7 @@ func (h *Handler) CreateUser(ctx *gin.Context) {
 	}
 
 	existingUser, existingUserError := h.repo.FindFirstBy("email", createUserDto.Email)
-	if existingUserError != nil && existingUserError.Error() != "record not found" {
+	if existingUserError != nil && existingUserError.Error() != "failed to find first record: record not found" {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": existingUserError.Error()})
 		return
 	}

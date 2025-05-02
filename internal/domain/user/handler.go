@@ -77,7 +77,7 @@ func (h *Handler) CreateUser(ctx *gin.Context) {
 
 func (h *Handler) DeleteUser(ctx *gin.Context) {
 	var id = ctx.Param("id")
-	err := h.repo.DeleteById(id)
+	err := h.repo.DeleteById(id, false)
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{"message": "resource not found"})
 	}

@@ -13,9 +13,6 @@ type TeamMemberDTO struct {
 	FirstName string `json:"first_name"`
 	LastName  string `json:"last_name"`
 	Email     string `json:"email"`
-}
-
-type CreateTeamRequest struct {
-	Name string `json:"name"`
-	Slug string `json:"slug"`
+	JoinedAt  string `json:"joined_at,omitempty"`
+	Role      string `json:"role"`
 }
