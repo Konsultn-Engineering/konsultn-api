@@ -6,8 +6,8 @@ import (
 )
 
 type TaskService interface {
-	CreateTask(req task.Task) (*task.Task, error)
-	GetTaskByID(id string) (*task.Task, error)
+	CreateTask(req task.Task) (task.Task, error)
+	GetTaskByID(id string) (task.Task, error)
 }
 
 type TaskUserService interface {

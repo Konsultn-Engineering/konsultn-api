@@ -1,11 +1,12 @@
 package dto
 
 type TeamDTO struct {
-	ID      string           `json:"id"`
-	Name    string           `json:"name"`
-	Slug    string           `json:"slug"`
-	Owner   *TeamMemberDTO   `json:"owner"`
-	Members *[]TeamMemberDTO `json:"members"`
+	ID          string           `json:"id"`
+	Name        string           `json:"name"`
+	Slug        string           `json:"slug"`
+	Description string           `json:"description"`
+	Owner       *TeamMemberDTO   `json:"owner"`
+	Members     *[]TeamMemberDTO `json:"members,omitempty"`
 }
 
 type TeamMemberDTO struct {
@@ -14,5 +15,5 @@ type TeamMemberDTO struct {
 	LastName  string `json:"last_name"`
 	Email     string `json:"email"`
 	JoinedAt  string `json:"joined_at,omitempty"`
-	Role      string `json:"role"`
+	Role      string `json:"role,omitempty"`
 }

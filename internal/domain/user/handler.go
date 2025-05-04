@@ -35,7 +35,7 @@ func (h *Handler) GetUserById(ctx *gin.Context) {
 }
 
 func (h *Handler) CreateUser(ctx *gin.Context) {
-	var user *CreateUserRequest
+	var user CreateUserRequest
 	if err := ctx.ShouldBindJSON(&user); err != nil {
 		// If there is an error (invalid JSON or missing fields), return an error response
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

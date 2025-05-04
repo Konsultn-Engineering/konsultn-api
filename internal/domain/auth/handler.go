@@ -52,7 +52,7 @@ func (h *Handler) CreateUser(ctx *gin.Context) {
 		return
 	}
 
-	if existingUser != nil {
+	if existingUser.ID != "" {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": existingUser})
 		return
 	}
@@ -62,7 +62,7 @@ func (h *Handler) CreateUser(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "error in creating user"})
 		return
 	}
-	userModel := user2.ToUserModel(&createUserDto)
+	userModel := user2.ToUserModel(createUserDto)
 	userModel.UID = uid
 
 	createdUser, err := h.repo.Save(userModel)

@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-func CanUpdateTeamMiddleware(teamService *service.TeamService) gin.HandlerFunc {
+func CanUpdateTeam(teamService *service.TeamService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userId, exists := c.Get("userId")
 

@@ -6,13 +6,13 @@ import (
 )
 
 type UserClientImpl struct {
-	UserRepo *crud.Repository[model.UserView]
+	UserRepo *crud.Repository[model.UserView, string]
 }
 
-func (u UserClientImpl) GetUserById(id string) *model.UserView {
+func (u UserClientImpl) GetUserById(id string) model.UserView {
 	record, err := u.UserRepo.FindById(id)
 	if err != nil {
-		return &model.UserView{}
+		return model.UserView{}
 	}
 
 	return record

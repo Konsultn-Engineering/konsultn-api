@@ -3,12 +3,13 @@ package handler
 import (
 	"github.com/gin-gonic/gin"
 	"konsultn-api/internal/domain/team/dto"
+	"konsultn-api/internal/shared/crud"
 	"konsultn-api/internal/shared/transport"
 	"net/http"
 )
 
 func (h *Handler) CreateTeam(ctx *gin.Context) {
-	userId, exists := ctx.Get("userId")
+	_, exists := ctx.Get("userId")
 
 	if !exists {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
@@ -21,7 +22,7 @@ func (h *Handler) CreateTeam(ctx *gin.Context) {
 		return
 	}
 
-	createdTeam, err := h.teamService.CreateTeam(userId.(string), createTeamRequest)
+	createdTeam, err := h.teamService.WithUser(ctx).CreateTeam(createTeamRequest)
 
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, transport.ErrorResponse{Message: err.Error()})
@@ -30,6 +31,7 @@ func (h *Handler) CreateTeam(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusCreated, dto.ToTeamDTO(&createdTeam))
 }
+
 func (h *Handler) FindTeamById(ctx *gin.Context) {
 	teamId := ctx.Param("id")
 
@@ -47,6 +49,7 @@ func (h *Handler) FindTeamById(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, dto.ToTeamDTO(&team))
 }
+
 func (h *Handler) UpdateTeamById(ctx *gin.Context) {
 	teamId := ctx.Param("id")
 	userId, _ := ctx.Get("userId")
@@ -65,4 +68,28 @@ func (h *Handler) UpdateTeamById(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, dto.ToTeamDTO(&updatedTeam))
+}
+
+func (h *Handler) ListAllTeams(ctx *gin.Context) {
+	var params crud.QueryParams
+
+	if err := ctx.ShouldBindQuery(&params); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid query parameters"})
+		return
+	}
+
+	teams, err := h.teamService.WithUser(ctx).GetAllUserTeams(params)
+
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, "")
+		return
+	}
+
+	var result []dto.TeamDTO
+
+	for _, team := range teams {
+		result = append(result, dto.ToTeamDTO(&team))
+	}
+
+	ctx.JSON(http.StatusOK, result)
 }

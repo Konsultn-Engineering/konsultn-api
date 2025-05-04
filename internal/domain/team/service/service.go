@@ -1,10 +1,9 @@
 package service
 
 import (
-	"fmt"
+	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"konsultn-api/internal/domain/team/client"
-	"konsultn-api/internal/domain/team/dto"
 	"konsultn-api/internal/domain/team/model"
 	"konsultn-api/internal/domain/team/repository"
 	"konsultn-api/internal/shared/crud"
@@ -17,13 +16,22 @@ type TeamService struct {
 	teamInvitationRepo *repository.TeamInvitationRepository
 	userClient         *client.UserClientImpl
 	db                 *gorm.DB
+	actingUserId       string
+}
+
+func (s *TeamService) WithUser(ctx *gin.Context) *TeamService {
+	// Return a shallow copy with user context
+	userId, _ := ctx.Get("userId")
+	newTeamService := *s // creates a shallow copy of the struct
+	newTeamService.actingUserId = userId.(string)
+	return &newTeamService
 }
 
 func NewTeamService(db *gorm.DB) *TeamService {
 	teamRepo := repository.NewTeamRepository(db)
 	teamMemberRepo := repository.NewTeamMemberRepository(db)
 	teamInvitationRepo := repository.NewTeamInvitationRepository(db)
-	userRepo := crud.NewRepository[model.UserView](db) // You must import the user domain
+	userRepo := crud.NewRepository[model.UserView, string](db) // You must import the user domain
 
 	// Inject UserClientImpl with its dependencies
 	userClient := &client.UserClientImpl{
@@ -40,33 +48,9 @@ func NewTeamService(db *gorm.DB) *TeamService {
 	}
 }
 
-func (s *TeamService) syncTeamMembers(teamId string, add []dto.AddMemberRequest, remove []string) error {
-	for _, user := range add {
-		// Skip if user doesn't exist in identity service
-		if s.userClient.GetUserById(user.UserId).ID == "" {
-			continue
-		}
-
-		member := model.TeamMember{
-			TeamID: teamId,
-			UserID: user.UserId,
-			Role:   user.Role.String(),
-		}
-
-		// Try inserting, and if already exists, update only if the role has changed
-		_, err := s.teamMemberRepo.UpsertOnlyColumns(&member, []string{"team_id", "user_id"}, []string{"role"})
-
-		if err != nil {
-			return fmt.Errorf("syncTeamMembers failed on user %s: %w", user.UserId, err)
-		}
-	}
-
-	if len(remove) > 0 {
-		if err := s.teamMemberRepo.DeleteWhere("team_id = ? AND user_id IN ?", teamId, remove); err != nil {
-			return err
-		}
-	}
-
+func (s *TeamService) hydrateOwner(team *model.Team) error {
+	owner := s.userClient.GetUserById(team.OwnerID)
+	team.Owner = &owner
 	return nil
 }
 

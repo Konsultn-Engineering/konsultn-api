@@ -4,8 +4,8 @@ package user
 //@TODO: Create Generic mapper
 ///*
 
-func ToUserModel(dto *CreateUserRequest) *User {
-	return &User{
+func ToUserModel(dto CreateUserRequest) User {
+	return User{
 		Email:    dto.Email,
 		Password: dto.Password,
 	}

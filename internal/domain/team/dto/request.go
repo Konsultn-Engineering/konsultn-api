@@ -8,15 +8,17 @@ type CreateTeamRequest struct {
 }
 
 type UpdateTeamRequest struct {
-	Name          *string            `json:"name,omitempty"`
-	Slug          *string            `json:"slug,omitempty"`
-	OwnerId       *string            `json:"owner_id,omitempty"`
-	AddMembers    []AddMemberRequest `json:"add_members,omitempty"`
-	RemoveMembers []string           `json:"remove_members,omitempty"`
+	Name    *string `json:"name,omitempty"`
+	Slug    *string `json:"slug,omitempty"`
+	OwnerId *string `json:"owner_id,omitempty"`
 }
 
 type AddMemberRequest struct {
 	UserId  string    `json:"user_id" binding:"required"`
 	Role    enum.Role `json:"role"`
 	Message *string   `json:"message"`
+}
+
+type UpdateMemberRequest struct {
+	Role enum.Role `json:"role" binding:"required"`
 }

@@ -6,11 +6,11 @@ import (
 )
 
 type Repository[task Task] struct {
-	*crud.Repository[task]
+	*crud.Repository[task, string]
 }
 
 func NewRepository(db *gorm.DB) *Repository[Task] {
 	return &Repository[Task]{
-		Repository: crud.NewRepository[Task](db),
+		Repository: crud.NewRepository[Task, string](db),
 	}
 }

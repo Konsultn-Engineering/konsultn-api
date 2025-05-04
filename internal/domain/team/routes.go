@@ -12,18 +12,34 @@ import (
 func RegisterRoutes(api *gin.RouterGroup, db *gorm.DB) {
 	teamService := service.NewTeamService(db)
 	h := handler.NewHandler(teamService)
+	canUpdateTeamMiddleware := middleware2.CanUpdateTeam(teamService)
 
-	team := api.Group("/teams", middleware.AuthMiddleware())
+	teams := api.Group("/teams", middleware.AuthMiddleware())
 	{
-		team.GET("/:id", h.FindTeamById)
-		team.POST("", h.CreateTeam)
-		team.PATCH("/:id", middleware2.CanUpdateTeamMiddleware(teamService), h.UpdateTeamById)
-		team.POST("/:id/invitations", middleware2.CanUpdateTeamMiddleware(teamService), h.InviteUsersToTeam)
-	}
+		// Basic team operations
+		teams.POST("", h.CreateTeam)      // Create a team
+		teams.GET("/:id", h.FindTeamById) // Get team by ID
+		teams.GET("", h.ListAllTeams)
+		teams.PATCH("/:id", canUpdateTeamMiddleware, h.UpdateTeamById) // Update team metadata
 
-	teamInvitation := api.Group("/teams/invitations", middleware.AuthMiddleware())
-	{
-		teamInvitation.PATCH("/:invitationId/accept", h.AcceptInvitation)
-		teamInvitation.PATCH("/:invitationId/reject", h.RejectInvitation)
+		// Member management under a team
+		members := teams.Group("/:id/members")
+		{
+			members.DELETE("/:memberId", canUpdateTeamMiddleware, h.RemoveTeamMember)    // Remove a member
+			members.PATCH("/:memberId", canUpdateTeamMiddleware, h.UpdateTeamMemberById) // (Optional) Update member role, etc.
+		}
+
+		// Invitations under a team
+		teamInvitations := teams.Group("/:id/invitations", canUpdateTeamMiddleware)
+		{
+			teamInvitations.POST("", h.InviteUsersToTeam) // Invite users to team
+		}
+
+		// Global invitation actions (accept/reject)
+		invitations := teams.Group("/invitations")
+		{
+			invitations.PATCH("/:invitationId/accept", h.AcceptInvitation)  // Accept invite
+			invitations.DELETE("/:invitationId/reject", h.RejectInvitation) // Reject invite
+		}
 	}
 }

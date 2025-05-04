@@ -6,5 +6,5 @@ import (
 )
 
 type TaskClient interface {
-	CreateTaskForProject(project *model.Project, task dto.TaskDTO) error
+	CreateTaskForProject(project model.Project, task dto.TaskDTO) error
 }

@@ -8,12 +8,12 @@ import (
 )
 
 type TeamInvitationRepository struct {
-	*crud.Repository[model.TeamInvitation]
+	*crud.Repository[model.TeamInvitation, string]
 }
 
 func NewTeamInvitationRepository(db *gorm.DB) *TeamInvitationRepository {
 	return &TeamInvitationRepository{
-		Repository: crud.NewRepository[model.TeamInvitation](db),
+		Repository: crud.NewRepository[model.TeamInvitation, string](db),
 	}
 }
 

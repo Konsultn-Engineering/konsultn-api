@@ -1,5 +1,10 @@
 package enum
 
+import (
+	"encoding/json"
+	"fmt"
+)
+
 // Role type
 type Role string
 
@@ -22,4 +27,21 @@ func IsValidRole(role Role) bool {
 		return true
 	}
 	return false
+}
+
+func (r *Role) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return err
+	}
+
+	fmt.Println("Unmarshaling role:", s) // Debug line
+
+	role := Role(s)
+	if !IsValidRole(role) {
+		return fmt.Errorf("invalid role: %s", s)
+	}
+
+	*r = role
+	return nil
 }

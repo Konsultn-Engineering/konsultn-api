@@ -7,11 +7,11 @@ import (
 )
 
 type Repository[project model.Project] struct {
-	*crud.Repository[project]
+	*crud.Repository[project, string]
 }
 
 func NewRepository(db *gorm.DB) *Repository[model.Project] {
 	return &Repository[model.Project]{
-		Repository: crud.NewRepository[model.Project](db),
+		Repository: crud.NewRepository[model.Project, string](db),
 	}
 }

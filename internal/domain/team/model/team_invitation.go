@@ -16,6 +16,6 @@ type TeamInvitation struct {
 	Role        string         `gorm:"not null"`
 	CreatedAt   time.Time      `gorm:"autoCreateTime"`
 	UpdatedAt   time.Time      `gorm:"autoUpdateTime"`
-	DeletedAt   gorm.DeletedAt `json:"deleted_at" swaggerignore:"true"`
+	DeletedAt   gorm.DeletedAt `swaggerignore:"true"`
 	ExpiresAt   *time.Time     `gorm:"index"` // Expiry date for invitation, optional
 }

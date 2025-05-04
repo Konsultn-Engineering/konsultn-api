@@ -1,6 +1,7 @@
 package model
 
 import (
+	"gorm.io/gorm"
 	"konsultn-api/internal/shared"
 	"time"
 )
@@ -11,5 +12,8 @@ type TeamMember struct {
 	UserID      string `gorm:"uniqueIndex:idx_team_member;not null"`
 	Role        string
 	JoinedAt    time.Time `gorm:"autoCreateTime"`
-	User        UserView  `gorm:"-"`
+	UpdatedBy   string
+	DeletedAt   gorm.DeletedAt `swaggerignore:"true"`
+	// Virtual / View
+	User UserView `gorm:"-"`
 }

@@ -14,7 +14,7 @@ func NewTaskLocal(db *gorm.DB) *TaskLocal {
 	return &TaskLocal{db: db}
 }
 
-func (c *TaskLocal) CreateTaskForProject(project *model.Project, t dto.TaskDTO) error {
+func (c *TaskLocal) CreateTaskForProject(project model.Project, t dto.TaskDTO) error {
 	task := dto.FromDTOTask(t)
 	task.ProjectID = &project.ID // Set foreign key
 

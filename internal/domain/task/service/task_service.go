@@ -12,17 +12,17 @@ func NewService(repo *task.Repository[task.Task]) TaskService {
 	return &service{repo: repo}
 }
 
-func (s *service) CreateTask(task task.Task) (*task.Task, error) {
-	createdTask, err := s.repo.Save(&task)
+func (s *service) CreateTask(taskDto task.Task) (task.Task, error) {
+	createdTask, err := s.repo.Save(taskDto)
 
 	if err != nil {
-		return nil, err
+		return task.Task{}, err
 	}
 
 	return createdTask, nil
 }
 
-func (s *service) GetTaskByID(id string) (*task.Task, error) {
+func (s *service) GetTaskByID(id string) (task.Task, error) {
 	createdTask, err := s.repo.FindById(id)
-	return &createdTask, err
+	return createdTask, err
 }
