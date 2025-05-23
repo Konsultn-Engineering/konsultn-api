@@ -14,7 +14,7 @@ func NewHandler(repo *Repository[Task]) *Handler {
 }
 
 func (h *Handler) CreateTask(ctx *gin.Context) {
-	var task Task
+	var task *Task
 	if err := ctx.ShouldBindJSON(&task); err != nil {
 		// If there is an error (invalid JSON or missing fields), return an error response
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -28,7 +28,7 @@ func (h *Handler) CreateTask(ctx *gin.Context) {
 		return
 	}
 
-	h.repo.Preload(&task, []string{"Assignee"}, "id", task.ID)
+	h.repo.Preload(task, []string{"Assignee"}, "id", task.ID)
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "task created successfully",
@@ -41,7 +41,7 @@ func (h *Handler) GetTaskById(ctx *gin.Context) {
 	taskId := ctx.Param("id")
 
 	task, err := h.repo.FindById(taskId)
-	h.repo.Preload(&task, []string{"Assignee"}, "id", task.ID)
+	h.repo.Preload(task, []string{"Assignee"}, "id", task.ID)
 
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

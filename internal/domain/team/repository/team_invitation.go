@@ -17,8 +17,8 @@ func NewTeamInvitationRepository(db *gorm.DB) *TeamInvitationRepository {
 	}
 }
 
-func (r *TeamInvitationRepository) FindValidInvitations(teamID string, userIds []string) ([]model.TeamInvitation, error) {
-	var invitations []model.TeamInvitation
+func (r *TeamInvitationRepository) FindValidInvitations(teamID string, userIds []string) ([]*model.TeamInvitation, error) {
+	var invitations []*model.TeamInvitation
 
 	invitations, err := r.FindWhereExpr("team_id = ? AND to_user_id IN ? AND expires_at > ?", teamID, userIds, time.Now())
 

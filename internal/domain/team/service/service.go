@@ -31,7 +31,7 @@ func NewTeamService(db *gorm.DB) *TeamService {
 	teamRepo := repository.NewTeamRepository(db)
 	teamMemberRepo := repository.NewTeamMemberRepository(db)
 	teamInvitationRepo := repository.NewTeamInvitationRepository(db)
-	userRepo := crud.NewRepository[model.UserView, string](db) // You must import the user domain
+	userRepo := crud.NewRepository[model.UserView, string](db)
 
 	// Inject UserClientImpl with its dependencies
 	userClient := &client.UserClientImpl{
@@ -69,7 +69,7 @@ func (s *TeamService) hydrateTeam(team *model.Team) error {
 	members := s.userClient.GetUsersByIds(memberIds)
 
 	// Build a map of userID → UserView
-	userMap := make(map[string]model.UserView, len(members))
+	userMap := make(map[string]*model.UserView, len(members))
 	for _, u := range members {
 		userMap[u.ID] = u
 	}
@@ -77,7 +77,7 @@ func (s *TeamService) hydrateTeam(team *model.Team) error {
 	// Attach UserView to each member
 	for i := range team.Members {
 		if u, ok := userMap[team.Members[i].UserID]; ok {
-			team.Members[i].User = u
+			team.Members[i].User = *u
 		}
 	}
 

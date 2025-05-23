@@ -65,7 +65,7 @@ func (h *Handler) CreateUser(ctx *gin.Context) {
 	userModel := user2.ToUserModel(createUserDto)
 	userModel.UID = uid
 
-	createdUser, err := h.repo.Save(userModel)
+	createdUser, err := h.repo.Save(&userModel)
 
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{"error": "error"})

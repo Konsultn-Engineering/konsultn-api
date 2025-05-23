@@ -19,7 +19,7 @@ func (s *TeamService) InviteUsersToTeam(fromUserId string, teamId string, invita
 		return fmt.Errorf("fetching valid invitations: %w", err)
 	}
 
-	existing := make(map[string]model.TeamInvitation, len(validInvites))
+	existing := make(map[string]*model.TeamInvitation, len(validInvites))
 	for _, inv := range validInvites {
 		existing[inv.ToUserID] = inv
 	}
@@ -45,7 +45,7 @@ func (s *TeamService) InviteUsersToTeam(fromUserId string, teamId string, invita
 		}
 
 		if _, err := s.teamInvitationRepo.UpsertOnlyColumns(
-			newInvite,
+			&newInvite,
 			[]string{"team_id", "to_user_id"},
 			[]string{"role", "status", "expires_at"},
 		); err != nil {
@@ -83,7 +83,7 @@ func (s *TeamService) UpdateTeamInvitation(invitationId string, action string, a
 		invitation.Status = enum.Accepted.String()
 
 		// Add the user as a team member
-		_, err := s.teamMemberRepo.Save(model.TeamMember{
+		_, err := s.teamMemberRepo.Save(&model.TeamMember{
 			TeamID:   invitation.TeamID,
 			UserID:   invitation.ToUserID,
 			Role:     invitation.Role,

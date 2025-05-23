@@ -3,7 +3,7 @@ package service
 import (
 	"fmt"
 	"konsultn-api/internal/domain/team/dto"
-	"konsultn-api/internal/shared/crud"
+	"konsultn-api/internal/shared/crud/types"
 )
 
 func (s *TeamService) UpdateTeamMember(teamId string, memberId string, updateMemberRequest dto.UpdateMemberRequest) error {
@@ -46,7 +46,7 @@ func (s *TeamService) RemoveTeamMember(teamId string, memberId string) error {
 		return nil
 	}
 
-	err = s.teamMemberRepo.SoftDeleteWithUpdate(teamMember[0], crud.UpdateMap{
+	err = s.teamMemberRepo.SoftDeleteWithUpdate(teamMember[0], types.UpdateMap{
 		"updated_by": s.actingUserId,
 	})
 

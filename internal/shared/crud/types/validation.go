@@ -1,4 +1,4 @@
-package crud
+package types
 
 import (
 	"fmt"
@@ -21,4 +21,8 @@ func (m UpdateMap) valid() error {
 		}
 	}
 	return nil
+}
+
+func (m UpdateMap) Valid() error {
+	return m.valid()
 }

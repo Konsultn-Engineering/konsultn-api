@@ -19,7 +19,7 @@ func RegisterRoutes(api *gin.RouterGroup, db *gorm.DB) {
 		// Basic team operations
 		teams.POST("", h.CreateTeam)      // Create a team
 		teams.GET("/:id", h.FindTeamById) // Get team by ID
-		teams.GET("", h.ListAllTeams)
+		teams.GET("", middleware.FilterMapMiddleware(), h.ListAllTeams)
 		teams.PATCH("/:id", canUpdateTeamMiddleware, h.UpdateTeamById) // Update team metadata
 
 		// Member management under a team

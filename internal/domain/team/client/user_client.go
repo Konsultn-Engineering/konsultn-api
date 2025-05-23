@@ -15,14 +15,14 @@ func (u UserClientImpl) GetUserById(id string) model.UserView {
 		return model.UserView{}
 	}
 
-	return record
+	return *record
 }
 
-func (u UserClientImpl) GetUsersByIds(ids []string) []model.UserView {
+func (u UserClientImpl) GetUsersByIds(ids []string) []*model.UserView {
 	users, err := u.UserRepo.FindByIds(ids)
 
 	if err != nil {
-		return []model.UserView{}
+		return nil
 	}
 
 	return users

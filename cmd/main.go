@@ -1,8 +1,9 @@
 package main
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 	"konsultn-api/internal/config"
 	"konsultn-api/internal/db"
 	"konsultn-api/internal/domain/project/model"
@@ -10,8 +11,22 @@ import (
 	model2 "konsultn-api/internal/domain/team/model"
 	"konsultn-api/internal/domain/user"
 	"konsultn-api/pkg/firebase"
+	"log"
 	"os"
+	"time"
 )
+
+func EnableGormSQLLogging(db *gorm.DB) {
+	db.Logger = logger.New(
+		log.New(os.Stdout, "\r\n", log.LstdFlags),
+		logger.Config{
+			SlowThreshold:             time.Second,
+			LogLevel:                  logger.Info,
+			IgnoreRecordNotFoundError: false,
+			Colorful:                  true,
+		},
+	)
+}
 
 func main() {
 	r := gin.Default()
@@ -34,22 +49,17 @@ func main() {
 
 	config.Setup(r, connection)
 
-	connection.Create(&user.User{Email: "khalid.elokiely@gmail.com"})
-	connection.Find(&user.User{})
-
-	var users []user.User
-	result := connection.Find(&users)
-
-	fmt.Println("Result error:", result.Error) // Capture any error
-	fmt.Printf("Users: %+v\n", users)          // Log the results
-
 	/*
 	* Handle port and host from environment
 	 */
 
+	if gin.Mode() == gin.DebugMode {
+		EnableGormSQLLogging(connection)
+	}
+
 	host := os.Getenv("IP") // Use "IP" for the host
 	if host == "" {
-		host = "::" // Default to all interfaces if not set
+		host = "::" // Default to all types if not set
 	}
 
 	port := os.Getenv("PORT")

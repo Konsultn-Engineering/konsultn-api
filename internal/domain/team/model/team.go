@@ -20,3 +20,15 @@ type Team struct {
 	UpdatedAt   time.Time
 	DeletedAt   gorm.DeletedAt `swaggerignore:"true"`
 }
+
+type TeamSummaryView struct {
+	ID          string    `mapstructure:"id"`
+	Name        string    `mapstructure:"name"`
+	Slug        string    `mapstructure:"slug"`
+	Description string    `mapstructure:"description"`
+	Owner       *UserView `gorm:"-"` // ignored by GORM; populated manually
+	OwnerID     string    `mapstructure:"owner_id"`
+	MemberCount int       `mapstructure:"member_count"`
+	CreatedAt   time.Time `mapstructure:"created_at"`
+	UpdatedAt   time.Time `mapstructure:"updated_at"`
+}

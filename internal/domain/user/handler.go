@@ -61,7 +61,7 @@ func (h *Handler) CreateUser(ctx *gin.Context) {
 	// Process the user data (e.g., save it to the database)
 	var userModel = ToUserModel(user)
 	userModel.UID = fbUser.UID
-	createdUser, creationError := h.repo.Save(userModel)
+	createdUser, creationError := h.repo.Save(&userModel)
 
 	if creationError != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": creationError.Error()})

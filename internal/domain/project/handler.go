@@ -41,7 +41,7 @@ func (h *Handler) CreateProject(ctx *gin.Context) {
 		return
 	}
 
-	project, err := h.projectService.Repo.Save(req)
+	project, err := h.projectService.Repo.Save(&req)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, transport.ErrorResponse{Message: err.Error()})
 		return

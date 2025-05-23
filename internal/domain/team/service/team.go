@@ -6,6 +6,8 @@ import (
 	"konsultn-api/internal/domain/team/dto"
 	"konsultn-api/internal/domain/team/model"
 	"konsultn-api/internal/shared/crud"
+	"maps"
+	"slices"
 )
 
 func (s *TeamService) CreateTeam(createTeamRequest dto.CreateTeamRequest) (model.Team, error) {
@@ -57,9 +59,9 @@ func (s *TeamService) GetTeamById(teamId string) (model.Team, error) {
 
 	owner := s.userClient.GetUserById(teamRecord.OwnerID)
 	teamRecord.Owner = &owner
-	_ = s.hydrateTeam(&teamRecord)
+	_ = s.hydrateTeam(teamRecord)
 
-	return teamRecord, nil
+	return *teamRecord, nil
 }
 
 func (s *TeamService) UpdateTeamById(userId string, teamId string, updateTeamRequest dto.UpdateTeamRequest) (model.Team, error) {
@@ -92,24 +94,29 @@ func (s *TeamService) UpdateTeamById(userId string, teamId string, updateTeamReq
 		return model.Team{}, err
 	}
 
-	s.hydrateTeam(&team)
+	err = s.hydrateTeam(team)
 
-	return team, nil
+	if err != nil {
+		return model.Team{}, err
+	}
+
+	return *team, nil
 }
 
-func (s *TeamService) GetAllUserTeams(params crud.QueryParams) ([]model.Team, error) {
+func (s *TeamService) GetAllUserTeams(params crud.QueryParams) (*crud.PaginatedResult[model.Team], error) {
 	userId := s.actingUserId
 
-	allTeams, err := s.teamRepo.Query(crud.AdvancedQuery{
-		QueryParams: params,
-		Joins: []crud.JoinClause{
-			{Table: "team_members", On: "team_members.team_id = teams.id", JoinType: "JOIN"},
-		},
-		Wheres: []crud.WhereClause{
-			{Query: "team_members.user_id = ?", Args: []any{userId}},
-		},
-		Preload: []string{},
-	})
+	qb := s.teamRepo.Members().
+		Select("teams.id", "teams.name", []string{"COUNT(team_members.user_id)", "member_count"}).
+		Join("team_members", "tm_user").OnGroup(
+		func(jb crud.JoinBuilder) {
+			jb.And("id", "=", "team_id")
+			jb.And("tm_user.user_id", "=", jb.Raw(userId))
+		}).
+		GroupBy("teams.id").
+		WithPageParams(params)
+
+	allTeams, err := qb.Paginate()
 
 	if err != nil {
 		return nil, fmt.Errorf("error fetching user teams: %w", err)
@@ -117,33 +124,64 @@ func (s *TeamService) GetAllUserTeams(params crud.QueryParams) ([]model.Team, er
 
 	// 1. Collect unique owner IDs
 	ownerIDSet := make(map[string]struct{})
-	for _, team := range allTeams {
+	for _, team := range allTeams.Result {
 		ownerIDSet[team.OwnerID] = struct{}{}
 	}
 
-	ownerIDs := make([]string, 0, len(ownerIDSet))
-	for id := range ownerIDSet {
-		ownerIDs = append(ownerIDs, id)
-	}
+	ownerIDs := maps.Keys(ownerIDSet) // Requires Go 1.21+
 
-	// 2. Fetch all users in a single call
-	owners := s.userClient.GetUsersByIds(ownerIDs)
-
-	// 3. Map user ID to user
-	ownerMap := make(map[string]model.UserView)
+	// 2. Fetch and map owners
+	owners := s.userClient.GetUsersByIds(slices.Sorted(ownerIDs))
+	ownerMap := make(map[string]*model.UserView, len(owners))
 	for _, user := range owners {
 		ownerMap[user.ID] = user
 	}
 
-	// 4. Assign Owner to each team
-	for i := range allTeams {
-		owner, exists := ownerMap[allTeams[i].OwnerID]
-		if exists {
-			allTeams[i].Owner = &owner
+	// 3. Assign owners to teams
+	for _, team := range allTeams.Result {
+		if owner, ok := ownerMap[team.OwnerID]; ok {
+			team.Owner = owner
 		}
 	}
 
-	return allTeams, nil
+	return (*crud.PaginatedResult[model.Team])(allTeams), nil
+}
+
+func (s *TeamService) Testing(params crud.QueryParams) any {
+	res, _ := s.teamRepo.Members().
+		Select("teams.*", []string{"COUNT(team_members.user_id)", "member_count"}).
+		Join("team_members", "tm_user").OnGroup(
+		func(jb crud.JoinBuilder) {
+			jb.On("id", "=", "team_id")
+			jb.And("tm_user.user_id", "IN", jb.RawSQL("(SELECT id from users where id = ?)", s.actingUserId))
+		}).
+		GroupBy("teams.id").
+		WithPageParams(params).PaginateMap()
+
+	allTeams, _ := crud.ConvertPaginated[model.TeamSummaryView](res)
+
+	ownerIDSet := make(map[string]struct{})
+	for _, team := range allTeams.Result {
+		ownerIDSet[team.OwnerID] = struct{}{}
+	}
+
+	ownerIDs := maps.Keys(ownerIDSet) // Requires Go 1.21+
+
+	// 2. Fetch and map owners
+	owners := s.userClient.GetUsersByIds(slices.Sorted(ownerIDs))
+	ownerMap := make(map[string]*model.UserView, len(owners))
+	for _, user := range owners {
+		ownerMap[user.ID] = user
+	}
+
+	// 3. Assign owners to teams
+	for _, team := range allTeams.Result {
+		if owner, ok := ownerMap[team.OwnerID]; ok {
+			team.Owner = owner
+		}
+	}
+
+	return allTeams
 }
 
 func (s *TeamService) CanUpdateOrDeleteTeam(teamId string, userId string) bool {

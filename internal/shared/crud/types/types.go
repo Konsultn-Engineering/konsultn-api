@@ -1,11 +1,8 @@
-package crud
+package types
 
-import "gorm.io/datatypes"
-
-// idType defines valid types for primary keys.
-type idType interface {
-	int | int8 | int16 | int32 | int64 | uint | uint8 | uint16 | uint32 | uint64 | string
-}
+import (
+	"gorm.io/datatypes"
+)
 
 // gormDatatype defines GORM-compatible complex field types.
 type gormDatatype interface {

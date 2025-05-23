@@ -29,7 +29,7 @@ func (h *Handler) CreateTeam(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, dto.ToTeamDTO(&createdTeam))
+	ctx.JSON(http.StatusCreated, dto.ToTeamDTO(createdTeam))
 }
 
 func (h *Handler) FindTeamById(ctx *gin.Context) {
@@ -47,7 +47,7 @@ func (h *Handler) FindTeamById(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, dto.ToTeamDTO(&team))
+	ctx.JSON(http.StatusOK, dto.ToTeamDTO(team))
 }
 
 func (h *Handler) UpdateTeamById(ctx *gin.Context) {
@@ -67,29 +67,33 @@ func (h *Handler) UpdateTeamById(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, dto.ToTeamDTO(&updatedTeam))
+	ctx.JSON(http.StatusOK, dto.ToTeamDTO(updatedTeam))
 }
 
 func (h *Handler) ListAllTeams(ctx *gin.Context) {
 	var params crud.QueryParams
 
+	// Bind basic query params
 	if err := ctx.ShouldBindQuery(&params); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid query parameters"})
 		return
 	}
 
-	teams, err := h.teamService.WithUser(ctx).GetAllUserTeams(params)
+	res := h.teamService.WithUser(ctx).Testing(params)
 
-	if err != nil {
-		ctx.JSON(http.StatusNotFound, "")
-		return
-	}
+	ctx.JSON(http.StatusOK, res)
 
-	var result []dto.TeamDTO
-
-	for _, team := range teams {
-		result = append(result, dto.ToTeamDTO(&team))
-	}
-
-	ctx.JSON(http.StatusOK, result)
+	///-----------------------------------------------
+	//if filterMap, exists := ctx.Get("filterMap"); exists {
+	//	params.Filter = filterMap.(map[string]string)
+	//}
+	//
+	//teams, err := h.teamService.WithUser(ctx).GetAllUserTeams(params)
+	//
+	//if err != nil {
+	//	ctx.JSON(http.StatusNotFound, "")
+	//	return
+	//}
+	//
+	//ctx.JSON(http.StatusOK, dto.ToTeamDTOPaginated(teams))
 }
